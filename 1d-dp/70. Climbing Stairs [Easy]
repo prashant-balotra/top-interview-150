@@ -19,3 +19,204 @@ class Solution {
     }
 }
 ```
+
+## Memoization
+
+```
+class Solution {
+    public int climbStairs(int n) {
+        int[] memo = new int[n+1];
+        return distinctWays(n, memo);
+    }
+
+    public int distinctWays(int stepsLeft, int[] memo) {
+        if(stepsLeft<0) return 0;
+        if(stepsLeft==0) return 1;
+
+        if(memo[stepsLeft] > 0) return memo[stepsLeft];
+
+        int oneSteps = distinctWays(stepsLeft - 1, memo);
+        int twoSteps = distinctWays(stepsLeft - 2, memo);
+
+        memo[stepsLeft] = oneSteps + twoSteps;
+
+        return memo[stepsLeft];
+    }
+}
+```
+
+## My below code was giving Time Limit Exceeded
+
+```
+
+class Solution {
+
+public int climbStairs(int n) {
+
+return distinctWays(n);
+
+}
+
+
+
+public int distinctWays(int stepsLeft) {
+
+if(stepsLeft==0 || stepsLeft==1) return 1;
+
+
+
+int oneSteps = distinctWays(stepsLeft - 1);
+
+int twoSteps = distinctWays(stepsLeft - 2);
+
+
+
+return oneSteps + twoSteps;
+
+}
+
+}
+```
+
+
+Because its time complexity is exponential, specifically O(2n). This happens due to a classic issue in recursion called overlapping subproblems.
+
+The Problem: Overlapping Subproblems
+
+
+Your recursive function distinctWays(n) calculates the same values over and over again.
+
+Let's trace the calls for climbStairs(5):
+
+                      climb(5)
+                     /        \
+               climb(4)        climb(3)
+              /      \        /      \
+        climb(3)  climb(2)  climb(2) climb(1)
+       /    \     /    \    /    \
+climb(2) climb(1) climb(1) climb(0) climb(1) climb(0)
+ /   \
+climb(1) climb(0)
+
+
+As you can see, climb(3) is computed 2 times, climb(2) is computed 3 times, and so on. As n gets larger, the number of these repeated computations explodes, leading to the TLE.
+
+How to Fix It
+
+You can solve this by storing the results of subproblems so you only have to compute them once. This technique is called dynamic programming. Here are two common ways to apply it.
+
+
+### Solution 1: Memoization (Top-Down DP)
+
+This approach keeps your recursive structure but adds a "cache" (an array, in this case) to store results.
+
+Concept:
+
+Create an array memo to store the results for each number of steps.
+
+Before computing distinctWays(n), check if the result is already in memo.
+
+If it is, return the stored value.
+
+If not, compute it, store it in memo, and then return it.
+
+```
+
+class Solution {
+    public int climbStairs(int n) {
+        // memo[i] will store the number of ways to climb i stairs.
+        int[] memo = new int[n + 1];
+        return distinctWays(n, memo);
+    }
+
+    public int distinctWays(int stepsLeft, int[] memo) {
+        if (stepsLeft < 0) return 0; // Should not happen with this problem's logic, but good practice.
+        if (stepsLeft == 0) return 1;
+        
+        // If we have already computed this, return the stored value.
+        if (memo[stepsLeft] > 0) {
+            return memo[stepsLeft];
+        }
+
+        // Compute, store in the cache, and then return.
+        memo[stepsLeft] = distinctWays(stepsLeft - 1, memo) + distinctWays(stepsLeft - 2, memo);
+        
+        return memo[stepsLeft];
+    }
+}
+```
+
+Time Complexity: O(n) - Each subproblem from 1 to n is solved only once.
+
+Space Complexity: O(n) - For the recursion stack and the memoization array.
+
+### Solution 2: Tabulation (Bottom-Up DP)
+
+This is an iterative approach that builds the solution from the bottom up, which is often more efficient. The problem is identical to generating a Fibonacci sequence.
+
+Concept:
+
+Create an array dp where dp[i] stores the number of ways to reach step i.
+
+Establish the base cases: dp[0] = 1 and dp[1] = 1.
+
+Iterate from 2 to n, filling the dp array using the relation: dp[i] = dp[i - 1] + dp[i - 2].
+
+The final answer is dp[n].
+
+```
+class Solution {
+    public int climbStairs(int n) {
+        if (n <= 1) {
+            return 1;
+        }
+
+        // dp[i] = number of ways to reach step i
+        int[] dp = new int[n + 1];
+        
+        // Base cases
+        dp[0] = 1; // Not strictly needed, but conceptually sound
+        dp[1] = 1;
+
+        for (int i = 2; i <= n; i++) {
+            dp[i] = dp[i - 1] + dp[i - 2];
+        }
+
+        return dp[n];
+    }
+}
+```
+
+Time Complexity: O(n)
+
+Space Complexity: O(n)
+
+
+### Solution 3: Space-Optimized DP (Most Efficient)
+
+You can notice that to calculate the current number of ways, you only need the previous two results. You don't need the entire dp array.
+
+```
+class Solution {
+    public int climbStairs(int n) {
+        if (n <= 1) {
+            return 1;
+        }
+
+        int one_step_back = 1; // Ways to reach step (i-1)
+        int two_steps_back = 1; // Ways to reach step (i-2)
+
+        for (int i = 2; i <= n; i++) {
+            int current_ways = one_step_back + two_steps_back;
+            two_steps_back = one_step_back;
+            one_step_back = current_ways;
+        }
+
+        return one_step_back;
+    }
+}
+```
+
+Time Complexity: O(n)
+
+Space Complexity: O(1)
